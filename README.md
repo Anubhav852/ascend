@@ -1,11 +1,36 @@
 # Atluri Ascend - Smart Building Demo App
 
+Live demo: https://ascend-demo-u3pg.onrender.com/
+
 A working demo of one shared building system with five role-based portals (tenant, staff, outlet, vendor, management) plus a public QR pass page. Built for an assessment.
 
 **Core idea: same engine, different configuration.** One request engine, one pass engine, one booking engine and one audit trail serve every flow. Roles are rows of data, not separate apps.
 
 ## Stack
-React + Vite + Tailwind 3, Supabase (Postgres, Auth, Realtime, row-level security). Deployed as a static site on Render.
+**Frontend:** React builds the role-based portals, Vite develops and bundles the app, and Tailwind CSS 3 styles the interface.
+
+**Backend and data:** Supabase provides PostgreSQL, authentication, Realtime updates, and row-level security. Database changes go through security-definer functions.
+
+**Hosting:** Render serves the built frontend as a static site. Supabase provides the backend services.
+
+## Architecture and request flow
+
+```mermaid
+flowchart LR
+    People[Tenants, staff, outlets, vendors, management] --> Browser[React app in browser]
+    Render[Render static site] -->|Serves built site| Browser
+    Browser -->|Sign in| Auth[Supabase Auth]
+    Auth -->|JWT session| Browser
+    Browser -->|Read and write requests| SupabaseAPI[Supabase API]
+    SupabaseAPI -->|Read checks| RLS[Postgres row-level security]
+    SupabaseAPI -->|Approved writes| Functions[Supabase security-definer functions]
+    RLS --> DB[(Supabase Postgres)]
+    Functions --> DB
+    DB -->|Database changes| Realtime[Supabase Realtime]
+    Realtime -->|Live updates| Browser
+```
+
+In short: Render serves the website, Supabase checks who is signed in and what they can access, Postgres stores the building data, and Realtime sends updates back to the browser.
 
 ## What is real in the demo
 - Food and coffee ordering end to end (order, outlet accept with ETA, runner pass, delivery, rating, billing)
